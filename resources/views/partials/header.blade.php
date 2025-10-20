@@ -3,11 +3,9 @@
         <div class="navbar-header" data-logobg="skin6">
             <a class="navbar-brand" href="/">
                 <b class="logo-icon">
-                    <img src="{{ asset('assets/images/logo-icon.png') }}" alt="homepage" class="dark-logo" />
+                    <img width="100px" src="{{ asset('assets/images/logo-icon.png') }}" alt="homepage" class="dark-logo" />
                 </b>
-                <span class="logo-text">
-                    <img src="{{ asset('assets/images/logo-text.png') }}" alt="homepage" class="dark-logo" />
-                </span>
+                
             </a>
             <a class="nav-toggler d-block d-md-none text-dark" href="javascript:void(0)">
                 <i class="ti-menu ti-close"></i>
@@ -22,11 +20,26 @@
                 </li>
             </ul>
             <ul class="navbar-nav">
+                @guest
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('login') }}">Login</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('register') }}">Sign up</a>
+                </li>
+                @else
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle waves-effect waves-dark" href="#" data-bs-toggle="dropdown">
-                        <img src="{{ asset('assets/images/users/1.jpg') }}" alt="user" class="profile-pic me-2">Admin
+                       {{ auth()->user()->name }}
                     </a>
+                    <div class="dropdown-menu dropdown-menu-end">
+                        <form method="POST" action="{{ route('logout') }}" class="px-3 py-1">
+                            @csrf
+                            <button type="submit" class="btn btn-link dropdown-item">Logout</button>
+                        </form>
+                    </div>
                 </li>
+                @endguest
             </ul>
         </div>
     </nav>

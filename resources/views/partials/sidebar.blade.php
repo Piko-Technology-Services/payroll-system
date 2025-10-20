@@ -9,7 +9,7 @@
                 </li>
                 <li class="sidebar-item">
                     <a class="sidebar-link waves-effect waves-dark" href="{{ route('payslips.index') }}">
-                        <i class="fa fa-money-bill me-2"></i>Payslips
+                        <i class="fa fa-users me-2"></i>Payslips
                     </a>
                 </li>
             </ul>

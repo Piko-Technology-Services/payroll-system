@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use Illuminate\Support\Facades\DB; // <-- Add this line
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -15,16 +16,19 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Delete existing test user
+        DB::table('users')->where('email', 'test@example.com')->delete();
 
+        // Create test user
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
 
-        // Seed default earnings and deductions
+        // Seed other data
         $this->call([
             DefaultEarningsAndDeductionsSeeder::class,
+            EmployeesTableSeeder::class,
         ]);
     }
 }

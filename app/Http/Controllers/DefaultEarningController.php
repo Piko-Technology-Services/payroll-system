@@ -42,6 +42,16 @@ class DefaultEarningController extends Controller
     }
 
     /**
+ * Fetch earning details (AJAX)
+ */
+public function edit($id)
+{
+    $earning = DefaultEarning::findOrFail($id);
+    return response()->json($earning);
+}
+
+
+    /**
      * Update the specified default earning
      */
     public function update(Request $request, $id)

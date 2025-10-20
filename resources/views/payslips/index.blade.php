@@ -4,32 +4,29 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h4 class="fw-bold">Payslips</h4>
-        <div class="btn-group">
+        <div class="btn-group" style="gap: 0.5rem;">
             <button class="btn btn-primary btn-sm" type="button" onclick="openPayslipModal();">
-                <i class="bi bi-plus-circle me-1"></i> Add Payslip
+            <i class="bi bi-plus-circle me-1"></i> Add Payslip
             </button>
             <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#generateFromNetPayModal">
-                <i class="bi bi-calculator me-1"></i> Generate from Net Pay
+            <i class="bi bi-calculator me-1"></i> Generate from Net Pay
             </button>
             <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#generateAllModal">
-                <i class="bi bi-gear me-1"></i> Generate All (Legacy)
+            <i class="bi bi-gear me-1"></i> Generate All (Legacy)
             </button>
             <a href="{{ route('payslips.export.csv') }}" class="btn btn-secondary btn-sm">
-                <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
+            <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
             </a>
             <a href="{{ route('payslips.export.pdf') }}" class="btn btn-danger btn-sm">
-                <i class="bi bi-file-earmark-pdf"></i> Export All PDF
+            <i class="bi bi-file-earmark-pdf"></i> Export All PDF
             </a>
-            <div class="btn-group">
-                <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#rulesModal">
-                    <i class="bi bi-gear"></i> Legacy Rules
-                </button>
-                <a href="{{ route('default-earnings.index') }}" class="btn btn-info btn-sm">
-                    <i class="bi bi-cash-coin"></i> Default Earnings
-                </a>
-                <a href="{{ route('default-deductions.index') }}" class="btn btn-dark btn-sm">
-                    <i class="bi bi-dash-circle"></i> Default Deductions
-                </a>
+            <div class="btn-group" style="gap: 0.5rem;">
+            <a href="{{ route('default-earnings.index') }}" class="btn btn-info btn-sm">
+                <i class="bi bi-cash-coin"></i> Default Earnings
+            </a>
+            <a href="{{ route('default-deductions.index') }}" class="btn btn-dark btn-sm">
+                <i class="bi bi-dash-circle"></i> Default Deductions
+            </a>
             </div>
         </div>
     </div>

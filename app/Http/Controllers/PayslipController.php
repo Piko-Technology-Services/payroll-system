@@ -12,7 +12,7 @@ use App\Models\DefaultEarning;
 use App\Models\DefaultDeduction;
 use App\Exports\PayslipsExport;
 use Maatwebsite\Excel\Facades\Excel;
-use PDF;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 
 class PayslipController extends Controller
@@ -257,7 +257,7 @@ class PayslipController extends Controller
     public function downloadPdf($id)
     {
         $payslip = Payslip::with('employee')->findOrFail($id);
-        $pdf = PDF::loadView('payslips.pdf', compact('payslip'));
+        $pdf = Pdf::loadView('payslips.pdf', compact('payslip'));
         return $pdf->download("Payslip_{$payslip->employee->fullnames}.pdf");
     }
 
@@ -269,7 +269,7 @@ class PayslipController extends Controller
     public function exportAllPdf()
     {
         $payslips = Payslip::with('employee')->get();
-        $pdf = PDF::loadView('payslips.all_pdf', compact('payslips'));
+        $pdf = Pdf::loadView('payslips.all_pdf', compact('payslips'));
         return $pdf->download('All_Payslips.pdf');
     }
 

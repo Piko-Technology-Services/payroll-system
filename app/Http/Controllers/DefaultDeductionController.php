@@ -43,6 +43,13 @@ class DefaultDeductionController extends Controller
         return back()->with('success', 'Default deduction added successfully.');
     }
 
+    public function edit($id)
+{
+    $deduction = DefaultDeduction::findOrFail($id);
+    return response()->json($deduction);
+}
+
+
     /**
      * Update the specified default deduction
      */

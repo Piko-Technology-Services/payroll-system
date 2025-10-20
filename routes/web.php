@@ -3,6 +3,7 @@
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\PayslipController;
 use App\Http\Controllers\RulesController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Api\EmployeeStatutoryController;
 use App\Http\Controllers\EarningRuleController;
 use App\Http\Controllers\DeductionRuleController;
@@ -20,12 +21,22 @@ Route::post('/earning-rules', [EarningRuleController::class, 'store'])->name('ea
 Route::post('/deduction-rules', [DeductionRuleController::class, 'store'])->name('deductionRules.store');
 
 Route::get('/', function () {
-    return redirect('/employees');
+    return auth()->check() ? redirect('/employees') : redirect()->route('login');
 });
+
+// Auth routes
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+    Route::post('/register', [AuthController::class, 'register'])->name('register.post');
+});
+
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 // web.php
 Route::get('/employees/{employee}/payslip-defaults', [PayslipController::class, 'getPayslipDefaults']);
 
-Route::prefix('employees')->group(function () {
+Route::middleware('auth')->prefix('employees')->group(function () {
     Route::get('/', [EmployeeController::class, 'index'])->name('employees.index');
     Route::get('/create', [EmployeeController::class, 'create'])->name('employees.create');
     Route::post('/', [EmployeeController::class, 'store'])->name('employees.store');
@@ -36,7 +47,7 @@ Route::prefix('employees')->group(function () {
     Route::delete('/{id}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
 });
 
-Route::prefix('payslips')->group(function () {
+Route::middleware('auth')->prefix('payslips')->group(function () {
     Route::get('/', [PayslipController::class, 'index'])->name('payslips.index');
     Route::get('/create', [PayslipController::class, 'create'])->name('payslips.create');
     Route::post('/', [PayslipController::class, 'store'])->name('payslips.store');
@@ -51,19 +62,21 @@ Route::prefix('payslips')->group(function () {
     Route::post('/generate-from-net-pay', [PayslipController::class, 'generateAllFromNetPay'])->name('payslips.generateFromNetPay');
 });
 
-Route::post('/rules/update', [RulesController::class, 'update'])->name('rules.update');
+Route::post('/rules/update', [RulesController::class, 'update'])->name('rules.update')->middleware('auth');
 
 // Default Earnings Management
-Route::prefix('default-earnings')->group(function () {
+Route::middleware('auth')->prefix('default-earnings')->group(function () {
     Route::get('/', [DefaultEarningController::class, 'index'])->name('default-earnings.index');
     Route::post('/', [DefaultEarningController::class, 'store'])->name('default-earnings.store');
+    Route::get('/{id}/edit', [DefaultEarningController::class, 'edit'])->name('default-earnings.edit'); // 👈 added
     Route::put('/{id}', [DefaultEarningController::class, 'update'])->name('default-earnings.update');
     Route::delete('/{id}', [DefaultEarningController::class, 'destroy'])->name('default-earnings.destroy');
     Route::patch('/{id}/toggle-status', [DefaultEarningController::class, 'toggleStatus'])->name('default-earnings.toggle-status');
 });
 
+
 // Default Deductions Management
-Route::prefix('default-deductions')->group(function () {
+Route::middleware('auth')->prefix('default-deductions')->group(function () {
     Route::get('/', [DefaultDeductionController::class, 'index'])->name('default-deductions.index');
     Route::post('/', [DefaultDeductionController::class, 'store'])->name('default-deductions.store');
     Route::put('/{id}', [DefaultDeductionController::class, 'update'])->name('default-deductions.update');

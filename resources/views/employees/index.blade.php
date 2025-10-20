@@ -3,18 +3,29 @@
 @section('content')
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="fw-bold">Employees</h4>
-        <div>
-            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
-                <i class="bi bi-plus-circle me-1"></i> Add Employee
-            </button>
-            <form action="{{ route('employees.import') }}" method="POST" enctype="multipart/form-data" class="d-inline">
-                @csrf
-                <input type="file" name="file" class="d-none" id="employeeFile" accept=".csv, .xlsx" onchange="this.form.submit()">
-                <label for="employeeFile" class="btn btn-secondary btn-sm"><i class="bi bi-upload"></i> Import</label>
-            </form>
-        </div>
+    <h4 class="fw-bold">Employees</h4>
+    <div class="btn-group">
+        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
+            <i class="bi bi-plus-circle me-1"></i> Add Employee
+        </button>
+
+        {{-- Import Form --}}
+        <form action="{{ route('employees.import') }}" method="POST" enctype="multipart/form-data" class="d-inline mx-3" id="employeesImportForm">
+            @csrf
+            <input type="file" name="file" class="d-none" id="employeeFile" accept=".csv, .xlsx" onchange="this.form.submit()">
+            <label for="employeeFile" class="btn btn-secondary btn-sm" id="importEmployeesBtn">
+                <span class="spinner-border spinner-border-sm me-1 d-none" role="status" aria-hidden="true"></span>
+                <i class="bi bi-upload me-1"></i><span class="import-text">Import</span>
+            </label>
+        </form>
+
+       <a href="{{ asset('templates/employees_template.xlsx') }}" class="btn btn-success btn-sm" download>
+            <i class="bi bi-download"></i> Download Excel Template
+        </a>
+
     </div>
+</div>
+
 
     <div class="card shadow-sm border-0">
         <div class="card-body table-responsive">
@@ -242,4 +253,36 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var form = document.getElementById('employeesImportForm');
+    var btn = document.getElementById('importEmployeesBtn');
+    var spinner = btn ? btn.querySelector('.spinner-border') : null;
+    var textEl = btn ? btn.querySelector('.import-text') : null;
+    var fileInput = document.getElementById('employeeFile');
+
+    function startLoading() {
+        if (!btn || !spinner || !textEl) return;
+        btn.classList.add('disabled');
+        spinner.classList.remove('d-none');
+        textEl.textContent = 'Importing...';
+    }
+
+    if (form) {
+        form.addEventListener('submit', function () {
+            startLoading();
+        });
+    }
+
+    if (fileInput) {
+        fileInput.addEventListener('change', function () {
+            // In case submit is delayed by validation, show loading as soon as file is chosen
+            startLoading();
+        });
+    }
+});
+</script>
 @endsection

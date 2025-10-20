@@ -158,27 +158,52 @@
 
 @section('scripts')
 <script>
-function editEarning(earningId) {
-    // This would typically fetch the earning data via AJAX
-    // For now, we'll just show the modal with the form
-    document.getElementById('modalTitle').textContent = 'Edit Default Earning';
-    document.getElementById('formMethod').value = 'PUT';
-    document.getElementById('earningForm').action = `/default-earnings/${earningId}`;
-    document.getElementById('earningId').value = earningId;
-    document.getElementById('submitBtn').textContent = 'Update Earning';
-    
-    // Show modal
-    new bootstrap.Modal(document.getElementById('addEarningModal')).show();
-}
+document.addEventListener("DOMContentLoaded", () => {
+    // Make editEarning globally accessible
+    window.editEarning = async function (earningId) {
+        try {
+            // Fetch earning details via AJAX
+            const response = await fetch(`/default-earnings/${earningId}/edit`);
+            if (!response.ok) throw new Error('Failed to fetch earning details');
+            
+            const data = await response.json();
 
-// Reset form when modal is hidden
-document.getElementById('addEarningModal').addEventListener('hidden.bs.modal', function() {
-    document.getElementById('modalTitle').textContent = 'Add Default Earning';
-    document.getElementById('formMethod').value = 'POST';
-    document.getElementById('earningForm').action = '{{ route("default-earnings.store") }}';
-    document.getElementById('earningId').value = '';
-    document.getElementById('submitBtn').textContent = 'Add Earning';
-    document.getElementById('earningForm').reset();
+            // Update modal title and form attributes
+            document.getElementById('modalTitle').textContent = 'Edit Default Earning';
+            document.getElementById('formMethod').value = 'PUT';
+            document.getElementById('earningForm').action = `/default-earnings/${earningId}`;
+            document.getElementById('earningId').value = earningId;
+            document.getElementById('submitBtn').textContent = 'Update Earning';
+
+            // Populate form fields
+            document.getElementById('earningName').value = data.name || '';
+            document.getElementById('earningAmount').value = data.amount || '';
+            document.getElementById('earningType').value = data.type || 'fixed';
+            document.getElementById('earningDescription').value = data.description || '';
+            document.getElementById('earningSortOrder').value = data.sort_order || 0;
+            document.getElementById('earningIsActive').checked = !!data.is_active;
+
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('addEarningModal'));
+            modal.show();
+
+        } catch (error) {
+            console.error(error);
+            alert('Error loading earning details. Please try again.');
+        }
+    };
+
+    // Reset modal when hidden
+    const earningModal = document.getElementById('addEarningModal');
+    earningModal.addEventListener('hidden.bs.modal', () => {
+        document.getElementById('modalTitle').textContent = 'Add Default Earning';
+        document.getElementById('formMethod').value = 'POST';
+        document.getElementById('earningForm').action = '{{ route("default-earnings.store") }}';
+        document.getElementById('earningId').value = '';
+        document.getElementById('submitBtn').textContent = 'Add Earning';
+        document.getElementById('earningForm').reset();
+    });
 });
 </script>
 @endsection
+
