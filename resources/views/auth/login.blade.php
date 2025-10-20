@@ -7,7 +7,7 @@
     <div class="card shadow-sm border-0">
         <div class="card-body p-4">
             <div class="text-center mb-4">
-                                <img width="100px" src="{{ asset('assets/images/logo-icon.png') }}" alt="homepage" class="dark-logo" />
+                                <img width="100px" src="{{ asset('assets/logo-word.png') }}" alt="homepage" class="dark-logo" />
 
             <h4 class="mt-2 mb-0">Best Choice Payroll</h4>
             </div>

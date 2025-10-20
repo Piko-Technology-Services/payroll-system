@@ -14,12 +14,26 @@
             <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#generateAllModal">
             <i class="bi bi-gear me-1"></i> Generate All (Legacy)
             </button>
+            <a href="{{ route('payslips.monthly') }}" class="btn btn-warning btn-sm">
+            <i class="bi bi-calendar-check me-1"></i> Monthly Review
+            </a>
             <a href="{{ route('payslips.export.csv') }}" class="btn btn-secondary btn-sm">
             <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
             </a>
-            <a href="{{ route('payslips.export.pdf') }}" class="btn btn-danger btn-sm">
-            <i class="bi bi-file-earmark-pdf"></i> Export All PDF
-            </a>
+            <div class="btn-group">
+                <a href="{{ route('payslips.export.pdf') }}" class="btn btn-danger btn-sm">
+                    <i class="bi bi-file-earmark-pdf"></i> Export All PDF
+                </a>
+                <button class="btn btn-danger btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown">
+                    <span class="visually-hidden">Toggle Dropdown</span>
+                </button>
+                <ul class="dropdown-menu">
+                    <li><h6 class="dropdown-header">Export by Month</h6></li>
+                    @foreach($payMonths as $month)
+                        <li><a class="dropdown-item" href="{{ route('payslips.export.monthly.pdf', ['month' => $month]) }}">{{ $month }}</a></li>
+                    @endforeach
+                </ul>
+            </div>
             <div class="btn-group" style="gap: 0.5rem;">
             <a href="{{ route('default-earnings.index') }}" class="btn btn-info btn-sm">
                 <i class="bi bi-cash-coin"></i> Default Earnings
@@ -27,6 +41,78 @@
             <a href="{{ route('default-deductions.index') }}" class="btn btn-dark btn-sm">
                 <i class="bi bi-dash-circle"></i> Default Deductions
             </a>
+            </div>
+        </div>
+    </div>
+
+    {{-- Filter Section --}}
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-header bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="bi bi-funnel me-2"></i>Filters</h6>
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#payslipFilterCollapse" aria-expanded="false">
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+            </div>
+        </div>
+        <div class="collapse" id="payslipFilterCollapse">
+            <div class="card-body">
+                <form method="GET" action="{{ route('payslips.index') }}" id="payslipFilterForm">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Search Employee</label>
+                            <input type="text" name="search" class="form-control" placeholder="Employee name or ID..." value="{{ request('search') }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Employee</label>
+                            <select name="employee_id" class="form-select">
+                                <option value="">All Employees</option>
+                                @foreach($employees as $employee)
+                                    <option value="{{ $employee->id }}" {{ request('employee_id') == $employee->id ? 'selected' : '' }}>
+                                        {{ $employee->fullnames }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Pay Month</label>
+                            <select name="pay_month" class="form-select">
+                                <option value="">All Months</option>
+                                @foreach($payMonths as $month)
+                                    <option value="{{ $month }}" {{ request('pay_month') == $month ? 'selected' : '' }}>{{ $month }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Pay Date From</label>
+                            <input type="date" name="pay_date_from" class="form-control" value="{{ request('pay_date_from') }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Pay Date To</label>
+                            <input type="date" name="pay_date_to" class="form-control" value="{{ request('pay_date_to') }}">
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label">Min Net Pay</label>
+                            <input type="number" name="net_pay_min" class="form-control" placeholder="0" value="{{ request('net_pay_min') }}" step="0.01">
+                        </div>
+                    </div>
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-2">
+                            <label class="form-label">Max Net Pay</label>
+                            <input type="number" name="net_pay_max" class="form-control" placeholder="999999" value="{{ request('net_pay_max') }}" step="0.01">
+                        </div>
+                        <div class="col-md-10 d-flex align-items-end">
+                            <div class="btn-group">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-search me-1"></i>Filter
+                                </button>
+                                <a href="{{ route('payslips.index') }}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-circle me-1"></i>Clear
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -188,6 +274,30 @@
 
 @section('scripts')
 <script>
-// Remove duplicate function - it's already defined in payslip-modal.blade.php
+document.addEventListener('DOMContentLoaded', function () {
+    // Auto-expand filter if any filters are active
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasFilters = Array.from(urlParams.keys()).some(key => 
+        ['search', 'employee_id', 'pay_month', 'pay_date_from', 'pay_date_to', 'net_pay_min', 'net_pay_max'].includes(key) && urlParams.get(key)
+    );
+    
+    if (hasFilters) {
+        document.getElementById('payslipFilterCollapse').classList.add('show');
+    }
+
+    // Real-time search functionality
+    let searchTimeout;
+    const searchInput = document.querySelector('input[name="search"]');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                if (this.value.length >= 3 || this.value.length === 0) {
+                    document.getElementById('payslipFilterForm').submit();
+                }
+            }, 500);
+        });
+    }
+});
 </script>
 @endsection

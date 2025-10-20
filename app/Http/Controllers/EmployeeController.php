@@ -9,10 +9,61 @@ use App\Imports\EmployeesImport;
 
 class EmployeeController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $employees = Employee::all();
-        return view('employees.index', compact('employees'));
+        $query = Employee::query();
+
+        // Apply filters
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('fullnames', 'like', "%{$search}%")
+                  ->orWhere('employee_id', 'like', "%{$search}%")
+                  ->orWhere('position', 'like', "%{$search}%")
+                  ->orWhere('department', 'like', "%{$search}%")
+                  ->orWhere('branch', 'like', "%{$search}%")
+                  ->orWhere('company', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('department')) {
+            $query->where('department', 'like', "%{$request->department}%");
+        }
+
+        if ($request->filled('position')) {
+            $query->where('position', 'like', "%{$request->position}%");
+        }
+
+        if ($request->filled('branch')) {
+            $query->where('branch', 'like', "%{$request->branch}%");
+        }
+
+        if ($request->filled('company')) {
+            $query->where('company', 'like', "%{$request->company}%");
+        }
+
+        if ($request->filled('pay_method')) {
+            $query->where('pay_method', 'like', "%{$request->pay_method}%");
+        }
+
+        if ($request->filled('salary_min')) {
+            $query->where('salary_rate', '>=', $request->salary_min);
+        }
+
+        if ($request->filled('salary_max')) {
+            $query->where('salary_rate', '<=', $request->salary_max);
+        }
+
+        $employees = $query->orderBy('fullnames')->get();
+
+        // Get unique values for filter dropdowns
+        $departments = Employee::whereNotNull('department')->distinct()->pluck('department')->filter()->sort();
+        $positions = Employee::whereNotNull('position')->distinct()->pluck('position')->filter()->sort();
+        $branches = Employee::whereNotNull('branch')->distinct()->pluck('branch')->filter()->sort();
+        $companies = Employee::whereNotNull('company')->distinct()->pluck('company')->filter()->sort();
+        $payMethods = Employee::whereNotNull('pay_method')->distinct()->pluck('pay_method')->filter()->sort();
+
+        return view('employees.index', compact('employees', 'departments', 'positions', 'branches', 'companies', 'payMethods'));
     }
 
     public function create()

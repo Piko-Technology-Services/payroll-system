@@ -21,8 +21,11 @@ Route::post('/earning-rules', [EarningRuleController::class, 'store'])->name('ea
 Route::post('/deduction-rules', [DeductionRuleController::class, 'store'])->name('deductionRules.store');
 
 Route::get('/', function () {
-    return auth()->check() ? redirect('/employees') : redirect()->route('login');
+    return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
 });
+
+// Dashboard Route
+Route::middleware('auth')->get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
 // Auth routes
 Route::middleware('guest')->group(function () {
@@ -49,6 +52,7 @@ Route::middleware('auth')->prefix('employees')->group(function () {
 
 Route::middleware('auth')->prefix('payslips')->group(function () {
     Route::get('/', [PayslipController::class, 'index'])->name('payslips.index');
+    Route::get('/monthly', [PayslipController::class, 'monthlyReview'])->name('payslips.monthly');
     Route::get('/create', [PayslipController::class, 'create'])->name('payslips.create');
     Route::post('/', [PayslipController::class, 'store'])->name('payslips.store');
     Route::get('/{id}/edit', [PayslipController::class, 'edit'])->name('payslips.edit');
@@ -58,6 +62,8 @@ Route::middleware('auth')->prefix('payslips')->group(function () {
     Route::get('/{id}/pdf', [PayslipController::class, 'downloadPdf'])->name('payslips.pdf');
     Route::get('/export/csv', [PayslipController::class, 'exportCsv'])->name('payslips.export.csv');
     Route::get('/export/pdf', [PayslipController::class, 'exportAllPdf'])->name('payslips.export.pdf');
+    Route::get('/export/monthly-pdf', [PayslipController::class, 'exportMonthlyPdf'])->name('payslips.export.monthly.pdf');
+    Route::get('/test-pdf', [PayslipController::class, 'testPdf'])->name('payslips.test.pdf');
     Route::post('/generate-all', [PayslipController::class, 'generateAll'])->name('payslips.generateAll');
     Route::post('/generate-from-net-pay', [PayslipController::class, 'generateAllFromNetPay'])->name('payslips.generateFromNetPay');
 });
@@ -85,3 +91,14 @@ Route::middleware('auth')->prefix('default-deductions')->group(function () {
 });
 
 Route::get('/api/employees/{id}/statutory', [EmployeeStatutoryController::class, 'getStatutory']);
+
+// Profile Management Routes
+Route::middleware('auth')->prefix('profile')->group(function () {
+    Route::get('/', [App\Http\Controllers\ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/edit', [App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/update', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/password', [App\Http\Controllers\ProfileController::class, 'updatePassword'])->name('profile.password.update');
+    Route::delete('/avatar', [App\Http\Controllers\ProfileController::class, 'deleteAvatar'])->name('profile.avatar.delete');
+    Route::get('/delete', [App\Http\Controllers\ProfileController::class, 'deleteForm'])->name('profile.delete.form');
+    Route::delete('/destroy', [App\Http\Controllers\ProfileController::class, 'destroy'])->name('profile.destroy');
+});

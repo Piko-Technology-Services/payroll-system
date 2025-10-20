@@ -16,7 +16,7 @@
     <meta name="address" content="Plot: 10096/7 Off Mumbwa Rd, Chinka Industrial Area, Private Bag: E891-15, Post.Net Lusaka-Zambia">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('assets/images/logo-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('assets/logo-single.png') }}">
 
     <!-- CSS Plugins -->
     <link href="{{ asset('assets/plugins/chartist/dist/chartist.min.css') }}" rel="stylesheet">
@@ -43,8 +43,12 @@
                     <div class="col-md-6 col-8 align-self-center">
                         <h3 class="page-title mb-0 p-0">@yield('page-title')</h3>
                         <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="/">Home</a></li>
-                            <li class="breadcrumb-item active">@yield('page-title')</li>
+                            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
+                            @if(request()->routeIs('dashboard'))
+                                <li class="breadcrumb-item active">@yield('page-title')</li>
+                            @else
+                                <li class="breadcrumb-item active">@yield('page-title')</li>
+                            @endif
                         </ol>
                     </div>
                 </div>

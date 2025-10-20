@@ -63,7 +63,9 @@
 <body>
 
 <div class="header">
-    <img src="{{ public_path('assets/images/logo-text.png') }}" alt="Company Logo">
+    @if(file_exists(public_path('assets/images/logo-text.png')))
+        <img src="{{ public_path('assets/images/logo-text.png') }}" alt="Company Logo">
+    @endif
     <h2>Best Choice Trading and Manufacturing Limited</h2>
     <h3>Payslip for {{ \Carbon\Carbon::parse($payslip->pay_date)->format('F Y') }}</h3>
 </div>

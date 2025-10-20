@@ -38,6 +38,94 @@
     </div>
 </div>
 
+{{-- Filter Section --}}
+<div class="card shadow-sm border-0 mb-3">
+    <div class="card-header bg-light">
+        <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0"><i class="bi bi-funnel me-2"></i>Filters</h6>
+            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false">
+                <i class="bi bi-chevron-down"></i>
+            </button>
+        </div>
+    </div>
+    <div class="collapse" id="filterCollapse">
+        <div class="card-body">
+            <form method="GET" action="{{ route('employees.index') }}" id="filterForm">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Search</label>
+                        <input type="text" name="search" class="form-control" placeholder="Name, ID, Position..." value="{{ request('search') }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Department</label>
+                        <select name="department" class="form-select">
+                            <option value="">All Departments</option>
+                            @foreach($departments as $dept)
+                                <option value="{{ $dept }}" {{ request('department') == $dept ? 'selected' : '' }}>{{ $dept }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Position</label>
+                        <select name="position" class="form-select">
+                            <option value="">All Positions</option>
+                            @foreach($positions as $pos)
+                                <option value="{{ $pos }}" {{ request('position') == $pos ? 'selected' : '' }}>{{ $pos }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Branch</label>
+                        <select name="branch" class="form-select">
+                            <option value="">All Branches</option>
+                            @foreach($branches as $branch)
+                                <option value="{{ $branch }}" {{ request('branch') == $branch ? 'selected' : '' }}>{{ $branch }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Company</label>
+                        <select name="company" class="form-select">
+                            <option value="">All Companies</option>
+                            @foreach($companies as $company)
+                                <option value="{{ $company }}" {{ request('company') == $company ? 'selected' : '' }}>{{ $company }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label">Pay Method</label>
+                        <select name="pay_method" class="form-select">
+                            <option value="">All</option>
+                            @foreach($payMethods as $method)
+                                <option value="{{ $method }}" {{ request('pay_method') == $method ? 'selected' : '' }}>{{ $method }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="row g-3 mt-2">
+                    <div class="col-md-2">
+                        <label class="form-label">Min Salary</label>
+                        <input type="number" name="salary_min" class="form-control" placeholder="0" value="{{ request('salary_min') }}" step="0.01">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Max Salary</label>
+                        <input type="number" name="salary_max" class="form-control" placeholder="999999" value="{{ request('salary_max') }}" step="0.01">
+                    </div>
+                    <div class="col-md-8 d-flex align-items-end">
+                        <div class="btn-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search me-1"></i>Filter
+                            </button>
+                            <a href="{{ route('employees.index') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle me-1"></i>Clear
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
     <div class="card shadow-sm border-0">
         <div class="card-body table-responsive">
@@ -327,6 +415,30 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
     });
+
+    // Auto-expand filter if any filters are active
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasFilters = Array.from(urlParams.keys()).some(key => 
+        ['search', 'department', 'position', 'branch', 'company', 'pay_method', 'salary_min', 'salary_max'].includes(key) && urlParams.get(key)
+    );
+    
+    if (hasFilters) {
+        document.getElementById('filterCollapse').classList.add('show');
+    }
+
+    // Real-time search functionality
+    let searchTimeout;
+    const searchInput = document.querySelector('input[name="search"]');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                if (this.value.length >= 3 || this.value.length === 0) {
+                    document.getElementById('filterForm').submit();
+                }
+            }, 500);
+        });
+    }
 });
 </script>
 @endsection

@@ -55,8 +55,10 @@
 @foreach($payslips as $payslip)
 <div class="payslip">
     <div class="header">
-        <img src="{{ public_path('assets/images/logo-text.png') }}" alt="Company Logo">
-        <h2>Company Name</h2>
+        @if(file_exists(public_path('assets/images/logo-text.png')))
+            <img src="{{ public_path('assets/images/logo-text.png') }}" alt="Company Logo">
+        @endif
+        <h2>Best Choice Trading and Manufacturing Limited</h2>
         <h3>Payslip for {{ \Carbon\Carbon::parse($payslip->pay_date)->format('F, Y') }}</h3>
     </div>
 
@@ -91,25 +93,17 @@
             <th>Earnings</th>
             <th>Amount (ZMW)</th>
         </tr>
-        <tr>
-            <td>Basic Pay</td>
-            <td>{{ number_format($payslip->basic_pay, 2) }}</td>
-        </tr>
-        <tr>
-            <td>Lunch Allowance</td>
-            <td>{{ number_format($payslip->lunch_allowance ?? 0, 2) }}</td>
-        </tr>
-        <tr>
-            <td>Housing Allowance</td>
-            <td>{{ number_format($payslip->housing_allowance ?? 0, 2) }}</td>
-        </tr>
-        <tr>
-            <td>Overtime</td>
-            <td>{{ number_format($payslip->overtime ?? 0, 2) }}</td>
-        </tr>
+        @if($payslip->earnings)
+            @foreach($payslip->earnings as $earning => $amount)
+                <tr>
+                    <td>{{ $earning }}</td>
+                    <td>{{ number_format($amount, 2) }}</td>
+                </tr>
+            @endforeach
+        @endif
         <tr class="totals">
-            <td>Total Income</td>
-            <td>{{ number_format($payslip->total_income, 2) }}</td>
+            <td>Total Earnings</td>
+            <td>{{ number_format($payslip->gross_pay ?? 0, 2) }}</td>
         </tr>
     </table>
 
@@ -118,21 +112,17 @@
             <th>Deductions</th>
             <th>Amount (ZMW)</th>
         </tr>
-        <tr>
-            <td>PAYE</td>
-            <td>{{ number_format($payslip->paye ?? 0, 2) }}</td>
-        </tr>
-        <tr>
-            <td>NAPSA</td>
-            <td>{{ number_format($payslip->napsa ?? 0, 2) }}</td>
-        </tr>
-        <tr>
-            <td>NHI</td>
-            <td>{{ number_format($payslip->nhi ?? 0, 2) }}</td>
-        </tr>
+        @if($payslip->deductions)
+            @foreach($payslip->deductions as $deduction => $amount)
+                <tr>
+                    <td>{{ $deduction }}</td>
+                    <td>{{ number_format($amount, 2) }}</td>
+                </tr>
+            @endforeach
+        @endif
         <tr class="totals">
             <td>Total Deductions</td>
-            <td>{{ number_format($payslip->total_deductions, 2) }}</td>
+            <td>{{ number_format($payslip->total_deductions ?? 0, 2) }}</td>
         </tr>
     </table>
 
