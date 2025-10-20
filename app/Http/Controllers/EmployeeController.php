@@ -53,14 +53,22 @@ class EmployeeController extends Controller
     public function update(Request $request, $id)
     {
         $employee = Employee::findOrFail($id);
-        $employee->update($request->all());
-        return redirect()->route('employees.index')->with('success', 'Employee updated successfully.');
+        try {
+            $employee->update($request->all());
+            return redirect()->route('employees.index')->with('success', 'Employee updated successfully.');
+        } catch (\Exception $e) {
+            return redirect()->route('employees.index')->with('error', 'Failed to update employee: ' . $e->getMessage());
+        }
     }
 
     public function destroy($id)
     {
-        Employee::destroy($id);
-        return back()->with('success', 'Employee deleted.');
+        try {
+            Employee::destroy($id);
+            return back()->with('success', 'Employee deleted.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to delete employee: ' . $e->getMessage());
+        }
     }
 
     public function importForm()
@@ -71,8 +79,12 @@ class EmployeeController extends Controller
     public function import(Request $request)
     {
         $request->validate(['file' => 'required|mimes:xlsx,csv']);
-        Excel::import(new EmployeesImport, $request->file('file'));
-        return redirect()->route('employees.index')->with('success', 'Employees imported successfully!');
+        try {
+            Excel::import(new EmployeesImport, $request->file('file'));
+            return redirect()->route('employees.index')->with('success', 'Employees imported successfully!');
+        } catch (\Exception $e) {
+            return redirect()->route('employees.index')->with('error', 'Import failed: ' . $e->getMessage());
+        }
     }
 }
 

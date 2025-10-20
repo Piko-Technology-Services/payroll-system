@@ -2,6 +2,18 @@
 
 @section('content')
 <div class="container-fluid">
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
     <div class="d-flex justify-content-between align-items-center mb-3">
     <h4 class="fw-bold">Employees</h4>
     <div class="btn-group">
@@ -155,7 +167,10 @@
                                             </div>
                                         </div>
                                         <div class="modal-footer">
-                                            <button type="submit" class="btn btn-success">Save Changes</button>
+                                            <button type="submit" class="btn btn-success" id="editEmployeeSubmitBtn{{ $employee->id }}">
+                                                <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                                <span class="submit-text">Save Changes</span>
+                                            </button>
                                         </div>
                                     </form>
                                 </div>
@@ -247,7 +262,10 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-primary">Save Employee</button>
+                    <button class="btn btn-primary" id="addEmployeeSubmitBtn" type="submit">
+                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        <span class="submit-text">Save Employee</span>
+                    </button>
                 </div>
             </form>
         </div>
@@ -283,6 +301,32 @@ document.addEventListener('DOMContentLoaded', function () {
             startLoading();
         });
     }
+
+    // Add loading spinner for Add Employee form
+    var addForm = document.querySelector('#addEmployeeModal form');
+    var addBtn = document.getElementById('addEmployeeSubmitBtn');
+    var addSpinner = addBtn ? addBtn.querySelector('.spinner-border') : null;
+    var addText = addBtn ? addBtn.querySelector('.submit-text') : null;
+    if (addForm && addBtn && addSpinner && addText) {
+        addForm.addEventListener('submit', function () {
+            addBtn.classList.add('disabled');
+            addSpinner.classList.remove('d-none');
+            addText.textContent = 'Saving...';
+        });
+    }
+    // Add loading spinner for Edit Employee forms
+    document.querySelectorAll('[id^="editEmployeeModal"] form').forEach(function(editForm) {
+        var btn = editForm.querySelector('button[type="submit"]');
+        var spinner = btn ? btn.querySelector('.spinner-border') : null;
+        var text = btn ? btn.querySelector('.submit-text') : null;
+        if (btn && spinner && text) {
+            editForm.addEventListener('submit', function () {
+                btn.classList.add('disabled');
+                spinner.classList.remove('d-none');
+                text.textContent = 'Saving...';
+            });
+        }
+    });
 });
 </script>
 @endsection

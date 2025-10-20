@@ -35,10 +35,10 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
-            return redirect()->intended('/');
+            return redirect()->intended('/')->with('success', 'Logged in successfully.');
         }
 
-        return back()->withErrors(['email' => 'Invalid credentials'])->onlyInput('email');
+        return back()->with('error', 'Invalid credentials')->onlyInput('email');
     }
 
     public function register(Request $request)
@@ -49,16 +49,20 @@ class AuthController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => $data['password'], // hashed by cast in model
-        ]);
+        try {
+            $user = User::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => $data['password'], // hashed by cast in model
+            ]);
 
-        Auth::login($user);
-        $request->session()->regenerate();
+            Auth::login($user);
+            $request->session()->regenerate();
 
-        return redirect('/');
+            return redirect('/')->with('success', 'Account created and logged in.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Registration failed: ' . $e->getMessage());
+        }
     }
 
     public function logout(Request $request)
@@ -66,7 +70,7 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect()->route('login');
+        return redirect()->route('login')->with('success', 'Logged out successfully.');
     }
 }
 

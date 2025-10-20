@@ -11,8 +11,20 @@
 
             <h4 class="mt-2 mb-0">Best Choice Payroll</h4>
             </div>
+            @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+            @if(session('error'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
             <h5 class="mb-3">Create Admin Account</h5>
-            <form method="POST" action="{{ route('register.post') }}">
+            <form method="POST" action="{{ route('register.post') }}" id="registerForm">
                 @csrf
                 <div class="mb-3">
                     <label class="form-label">Name</label>
@@ -32,7 +44,10 @@
                     <label class="form-label">Confirm Password</label>
                     <input type="password" name="password_confirmation" class="form-control" required>
                 </div>
-                <button type="submit" class="btn btn-primary w-100">Create Account</button>
+                <button type="submit" class="btn btn-primary w-100" id="registerSubmitBtn">
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    <span class="submit-text">Create Account</span>
+                </button>
             </form>
             <div class="mt-3 text-center">
                 <a href="{{ route('login') }}">Back to login</a>
@@ -40,6 +55,24 @@
         </div>
     </div>
  </div>
+@endsection
+
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var regForm = document.getElementById('registerForm');
+    var regBtn = document.getElementById('registerSubmitBtn');
+    var spinner = regBtn ? regBtn.querySelector('.spinner-border') : null;
+    var text = regBtn ? regBtn.querySelector('.submit-text') : null;
+    if (regForm && regBtn && spinner && text) {
+        regForm.addEventListener('submit', function () {
+            regBtn.classList.add('disabled');
+            spinner.classList.remove('d-none');
+            text.textContent = 'Creating...';
+        });
+    }
+});
+</script>
 @endsection
 
 
