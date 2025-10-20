@@ -38,18 +38,126 @@ class PayslipController extends Controller
         try {
             $employee = Employee::findOrFail($employeeId);
             
-            // Use reverse calculation to get Gross Pay from Net Pay (salary_rate)
-            $calc = PayslipCalculator::reverseCalculate($employee->salary_rate);
+            // Get default earnings with metadata
+            $defaultEarnings = \App\Models\DefaultEarning::active()->ordered()->get();
+            $earnings = [];
+            $earningsData = [];
+            
+            // If no default earnings exist, create basic ones
+            if ($defaultEarnings->isEmpty()) {
+                $earnings['Basic Pay'] = $employee->salary_rate;
+                $earningsData[] = [
+                    'name' => 'Basic Pay',
+                    'amount' => $employee->salary_rate,
+                    'type' => 'fixed',
+                    'description' => 'Basic monthly salary',
+                    'enabled' => true
+                ];
+            } else {
+                foreach ($defaultEarnings as $earning) {
+                    if ($earning->name === 'Basic Pay') {
+                        $amount = $employee->salary_rate;
+                    } else {
+                        $amount = $earning->calculateAmount($employee->salary_rate);
+                    }
+                    
+                    $earnings[$earning->name] = $amount;
+                    $earningsData[] = [
+                        'name' => $earning->name,
+                        'amount' => $amount,
+                        'type' => $earning->type,
+                        'description' => $earning->description,
+                        'enabled' => true // Default to enabled
+                    ];
+                }
+            }
+            
+            // Get default deductions with metadata
+            $defaultDeductions = \App\Models\DefaultDeduction::active()->ordered()->get();
+            $deductions = [];
+            $deductionsData = [];
+            $grossPay = array_sum($earnings);
+            
+            // If no default deductions exist, create basic ones
+            if ($defaultDeductions->isEmpty()) {
+                // Create basic statutory deductions
+                $paye = $this->calculateBasicPAYE($grossPay);
+                $napsa = round($grossPay * 0.05, 2);
+                $nhis = round($grossPay * 0.02, 2);
+                
+                $deductions['PAYE'] = $paye;
+                $deductions['NAPSA'] = $napsa;
+                $deductions['NHIS'] = $nhis;
+                
+                $deductionsData[] = [
+                    'name' => 'PAYE',
+                    'amount' => $paye,
+                    'type' => 'percentage',
+                    'description' => 'Pay As You Earn Tax',
+                    'is_statutory' => true,
+                    'enabled' => true
+                ];
+                $deductionsData[] = [
+                    'name' => 'NAPSA',
+                    'amount' => $napsa,
+                    'type' => 'percentage',
+                    'description' => 'National Pension Scheme Authority',
+                    'is_statutory' => true,
+                    'enabled' => true
+                ];
+                $deductionsData[] = [
+                    'name' => 'NHIS',
+                    'amount' => $nhis,
+                    'type' => 'percentage',
+                    'description' => 'National Health Insurance Scheme',
+                    'is_statutory' => true,
+                    'enabled' => true
+                ];
+            } else {
+                foreach ($defaultDeductions as $deduction) {
+                    if ($deduction->is_statutory) {
+                        // Handle statutory deductions with special calculations
+                        switch ($deduction->name) {
+                            case 'PAYE':
+                                $amount = $this->calculateBasicPAYE($grossPay);
+                                break;
+                            case 'NAPSA':
+                                $amount = round($grossPay * 0.05, 2);
+                                break;
+                            case 'NHIS':
+                                $amount = round($grossPay * 0.02, 2);
+                                break;
+                            default:
+                                $amount = $deduction->calculateAmount($grossPay);
+                        }
+                    } else {
+                        $amount = $deduction->calculateAmount($grossPay);
+                    }
+                    
+                    $deductions[$deduction->name] = $amount;
+                    $deductionsData[] = [
+                        'name' => $deduction->name,
+                        'amount' => $amount,
+                        'type' => $deduction->type,
+                        'description' => $deduction->description,
+                        'is_statutory' => $deduction->is_statutory,
+                        'enabled' => true // Default to enabled
+                    ];
+                }
+            }
+            
+            $totalDeductions = array_sum($deductions);
+            $netPay = $grossPay - $totalDeductions;
 
             return response()->json([
                 'success' => true,
-                'earnings' => $calc['earnings'],
-                'deductions' => $calc['deductions'],
-                'gross_pay' => $calc['gross_pay'],
-                'total_deductions' => $calc['total_deductions'],
-                'net_pay' => $calc['net_pay'],
-                'converged' => $calc['converged'],
-                'iterations' => $calc['iterations'] ?? 0,
+                'earnings' => $earnings,
+                'deductions' => $deductions,
+                'earningsData' => $earningsData,
+                'deductionsData' => $deductionsData,
+                'gross_pay' => round($grossPay, 2),
+                'total_deductions' => round($totalDeductions, 2),
+                'net_pay' => round($netPay, 2),
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -59,6 +167,20 @@ class PayslipController extends Controller
         }
     }
 
+    /**
+     * Calculate basic PAYE tax (simplified calculation)
+     */
+    private function calculateBasicPAYE($grossPay)
+    {
+        // Basic PAYE calculation for Zambia (simplified)
+        if ($grossPay <= 4000) {
+            return 0; // Tax-free threshold
+        } elseif ($grossPay <= 6000) {
+            return round(($grossPay - 4000) * 0.25, 2); // 25% on excess over 4000
+        } else {
+            return round(500 + ($grossPay - 6000) * 0.30, 2); // 500 + 30% on excess over 6000
+        }
+    }
 
     public function create()
     {
@@ -74,21 +196,20 @@ class PayslipController extends Controller
             'pay_date' => 'required|date',
             'earnings' => 'required|array',
             'deductions' => 'array',
+            'gross_pay' => 'required|numeric|min:0',
+            'total_deductions' => 'required|numeric|min:0',
+            'net_pay' => 'required|numeric|min:0',
         ]);
-        $employee = Employee::findOrFail($data['employee_id']);
-        $calc = \App\Services\PayslipCalculator::calculate(
-            $data['earnings'],
-            $data['deductions'] ?? [],
-            $employee
-        );
+        
         Payslip::create([
             'employee_id' => $data['employee_id'],
             'pay_month' => $data['pay_month'],
             'pay_date' => $data['pay_date'],
-            'earnings' => $calc['earnings'],
-            'deductions' => $calc['deductions'],
-            'gross_pay' => $calc['gross_pay'],
-            'net_pay' => $calc['net_pay'],
+            'earnings' => $data['earnings'],
+            'deductions' => $data['deductions'] ?? [],
+            'gross_pay' => $data['gross_pay'],
+            'total_deductions' => $data['total_deductions'],
+            'net_pay' => $data['net_pay'],
         ]);
         return redirect()->route('payslips.index')->with('success', 'Payslip created successfully.');
     }
@@ -109,21 +230,20 @@ class PayslipController extends Controller
             'pay_date' => 'required|date',
             'earnings' => 'required|array',
             'deductions' => 'array',
+            'gross_pay' => 'required|numeric|min:0',
+            'total_deductions' => 'required|numeric|min:0',
+            'net_pay' => 'required|numeric|min:0',
         ]);
-        $employee = Employee::findOrFail($data['employee_id']);
-        $calc = \App\Services\PayslipCalculator::calculate(
-            $data['earnings'],
-            $data['deductions'] ?? [],
-            $employee
-        );
+        
         $payslip->update([
             'employee_id' => $data['employee_id'],
             'pay_month' => $data['pay_month'],
             'pay_date' => $data['pay_date'],
-            'earnings' => $calc['earnings'],
-            'deductions' => $calc['deductions'],
-            'gross_pay' => $calc['gross_pay'],
-            'net_pay' => $calc['net_pay'],
+            'earnings' => $data['earnings'],
+            'deductions' => $data['deductions'] ?? [],
+            'gross_pay' => $data['gross_pay'],
+            'total_deductions' => $data['total_deductions'],
+            'net_pay' => $data['net_pay'],
         ]);
         return redirect()->route('payslips.index')->with('success', 'Payslip updated successfully.');
     }
